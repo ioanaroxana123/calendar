@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, use } from 'react';
 import { Card, ListGroup, Form, Button, Modal } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { 
@@ -6,6 +6,8 @@ import {
   eachDayOfInterval, isSameMonth, isSameDay, isPast, getDay, addDays 
 } from 'date-fns';
 import { ro } from 'date-fns/locale';
+
+const URL = 'https://calendar-backend-o918.onrender.com'
 
 function App() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -16,6 +18,19 @@ function App() {
   const [totalTasks, setTotalTasks] = useState(0);
   const [completedTasks, setCompletedTasks] = useState(0);
   const appRef = useRef(null);
+
+  useEffect(() => {
+    fetch(`${URL}/tasks`)
+    .then(res => res.json())
+    .then(data =>  {
+        const tasksWithDates = data.map(task => ({
+          ...task,
+          date: new Date(task.date), 
+        }));
+        setTasks(tasksWithDates);
+    })
+    .catch((err) => console.log(err, "getting tasks"))
+  }, [])
 
   const daysInMonth = eachDayOfInterval({
     start: addDays(startOfMonth(currentDate), -((getDay(startOfMonth(currentDate)) + 6) % 7)),
@@ -55,7 +70,19 @@ function App() {
       hour: newTask.hour,
       completed: false,
       date: selectedDay
-    };
+    }
+
+    fetch(`${URL}/task`, {
+      method: 'POST', 
+      headers: {
+        'Content-Type': 'application/json', 
+      },
+      body: JSON.stringify(task), 
+    })
+    .then(response => {
+      if(!response.ok)
+        console.log("Error posting a task");
+    })
 
     setTasks(prevTasks => [...prevTasks, task]);
     setTotalTasks(prev => prev + 1);
@@ -147,11 +174,10 @@ function App() {
           }
           
           .current-day {
-  background-color: inherit; /* Eliminăm fundalul colorat */
-  border: 4px solid white !important; /* Bordură albă boldată */
-  font-weight: bold; /* Text bold */
-
-}
+              background-color: inherit; /* Eliminăm fundalul colorat */
+              border: 4px solid black !important; /* Bordură albă boldată */
+              font-weight: bold; /* Text bold */
+          }
           
           .other-month {
             opacity: 0.5;
@@ -302,10 +328,9 @@ function App() {
       <div style={{ 
         width: '70%', 
         padding: '20px', 
-        overflowY: 'auto',
-        msOverflowStyle: 'none'
+        msOverflowStyle: 'none',
       }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '10px', marginBottom: '15px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '10px', marginBottom: '10px' }}>
           {weekdayNames.map((day, index) => (
             <div 
               key={day}
@@ -345,7 +370,7 @@ function App() {
                 <div style={{ 
                   fontWeight: 'bold', 
                   marginBottom: '5px',
-                  color: isCurrentDay ? '#ECAAC2' : '#333'
+                  color: '#333'
                 }}>
                   {format(day, 'd')}
                 </div>
