@@ -29,6 +29,13 @@ function App() {
   }, []);
 
   useEffect(() => {
+    const totalCount = tasks.filter((task) => isSameMonth(task.date, currentDate)).length;
+    const completedCount = tasks.filter((task) => isSameMonth(task.date, currentDate) && task.completed).length;
+    setTotalTasks(totalCount);
+    setCompletedTasks(completedCount)
+  }, [currentDate, tasks])
+
+  useEffect(() => {
     fetch(`${URL}/tasks`)
     .then(res => res.json())
     .then(data =>  {
@@ -94,7 +101,6 @@ function App() {
     })
 
     setTasks(prevTasks => [...prevTasks, task]);
-    setTotalTasks(prev => prev + 1);
     setNewTask({ text: '', hour: '0' });
     setShowModal(false);
   };
@@ -111,11 +117,6 @@ function App() {
   };
 
   useEffect(() => {
-    setTotalTasks(tasks.length);
-    setCompletedTasks(tasks.filter(task => task.completed).length);
-  }, [tasks]);
-
-  useEffect(() => {
     const handleClickOutside = (event) => {
       if (appRef.current && !appRef.current.contains(event.target)) {
         setSelectedDay(day);
@@ -125,6 +126,22 @@ function App() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+
+  const handleDeleteTask = (task) => {
+    fetch(`${URL}/tasks/${task.id}`, {
+      method: 'DELETE',
+    })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error('Failed to delete task');
+      }
+      setTasks((prevTasks) => prevTasks.filter((t) => t.id !== task.id));
+    })
+    .catch((error) => {
+      console.error('Error deleting task:', error);
+    });
+  }
 
   return (
     <div ref={appRef} style={{
@@ -400,7 +417,7 @@ function App() {
                       className="delete-task-btn"
                       onClick={(e) => {
                         e.stopPropagation();
-                        // You'll implement the delete functionality here
+                        handleDeleteTask(task) 
                       }}
                     >
                       ×
