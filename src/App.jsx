@@ -281,7 +281,7 @@ function App() {
             
             <ListGroup style={{ maxHeight: '300px', overflowY: 'auto' }}>
               {tasks.map(task => (
-                <ListGroup.Item key={task.id} className="task-item">
+                isSameMonth(task.date, currentDate) && <ListGroup.Item key={task.id} className="task-item">
                   <Form.Check 
                     type="checkbox"
                     checked={task.completed}
